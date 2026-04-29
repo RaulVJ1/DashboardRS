@@ -12,3 +12,10 @@ data/trecho_drenagem/geojson/alegrete.geojson
 data/trecho_drenagem/geojson/dom_pedrito.geojson
 data/trecho_drenagem/geojson/sanatana_do_livramento.geojson
 data/trecho_drenagem/geojson/sao_gabriel.geojson
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
