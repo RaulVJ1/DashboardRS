@@ -1,0 +1,1133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DashboardRS</title>
+    <!--icon-->
+    <link rel="icon" href="images/logo_temp2.png" type="image/png">
+
+    <!--Leaflet CSS-->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <link rel="stylesheet" href="public/css/style.css">
+    <link rel="stylesheet" href="public/css/chatbot-window.css">
+</head>
+<body>
+    <script type="module">
+        // Inicialização do mapa
+        window.map = L.map('map', { zoomControl: false }).setView([-29.50814551526093, -53.20632619363663], 7);
+
+        // Camada osm
+        var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        })
+
+        // Reposicona a posição dos bõtões de zoom
+        L.control.zoom({
+            position: 'bottomleft'
+        }).addTo(map);
+
+        osm.addTo(map);
+    </script>
+
+    <div id="map"></div> <!--Mapa-->
+
+    <!-- Painel lateral que mostra a cidade e informações básicas -->
+    <div class="city_panel">
+        <div id="cityPanelContent">
+            <h1 class="cityTitle"></h1>
+            <p class="cityDescription"></p>
+            <button class="action-btn--nav" class="main-icon" id="riverBtn" title="Exibir trecho de drenagem">
+                <img src="images/river_icon.png" class="main-icon" alt="River">
+            </button>
+            <button class="action-btn--nav" class="main-icon" id="incidentsBtn" title="Exibir todos os incidentes envolvendo a métrica">
+                <img src="images/incidents_icon.png" class="main-icon" alt="Incidents">
+            </button>
+        </div>
+    </div>
+
+    <!-- Painel de filtros -->
+    <div class="filter_panel">
+        <h1 class="city-title">Filtros</h1>
+        <div class="basic-box"> 
+            <p class="city-subtitle">Desastres e Métricas</p>
+            <label for="sortFieldDisasterType">Desastres:</label>
+            <!--
+            Cada um desses IDs é um tipo de desastre/incidente
+            (referenciado como "tipologia" no Atlas)
+            -->
+            <select id="sortFieldDisasterType">
+                <option value="0">Todos</option>
+                <option value="1">Alagamentos</option>
+                <option value="2">Enxurradas</option>
+                <option value="3">Erosão</option>
+                <option value="4">Estiagem e seca</option>
+                <option value="5">Granizo</option>
+                <option value="6">Incêndio Florestal</option>
+                <option value="7">Inundações</option>
+                <option value="8">Movimentos de Massa</option>
+                <option value="9">Chuvas Intensas</option>
+                <option value="10">Ondas de Frio</option>
+                <option value="11">Tornado</option>
+                <option value="12">Vendavais e Ciclones</option>
+                <option value="13">Outros</option>
+                <option value="15">Rompimento ou Colapsos de Barragens</option>
+                <option value="14">Outros</option>
+            </select>
+
+            <!--
+            Cada um dessas opções corresponde a uma métrica de incidentes.
+            Quando selecionado, será feito uma soma desse tipo de valor
+            de acordo com os demais filtros.
+             -->
+            <label for="sortFieldDamage">Métrica:</label>
+            <select id="sortFieldDamage">
+                <optgroup label="Geral">
+                    <option value="total_desastres">Número de incidentes</option>
+                </optgroup>
+                <optgroup label="Danos Humanos">
+                    <option value="DH_total_danos_humanos_diretos">Danos Humanos (Total)</option>
+                    <option value="DH_MORTOS">Mortos</option>
+                    <option value="DH_FERIDOS">Feridos</option>
+                    <option value="DH_ENFERMOS">Enfermos</option>
+                    <option value="DH_DESABRIGADOS">Desabrigados</option>
+                    <option value="DH_DESALOJADOS">Desalojados</option>
+                    <option value="DH_DESAPARECIDOS">Desaparecidos</option>
+                    <option value="DH_AFETADOS_SECA_ESTIAGEM">Afetados por Seca/Estiagem</option>
+                    <option value="DH_OUTROS AFETADOS">Outros Afetados</option>
+                </optgroup>
+
+                <optgroup label="Danos Materiais">
+                    <option value="DM_total_danos_materiais">Danos Materiais (Total)</option>
+
+                    <option value="DM_Uni Habita Danificadas">Habitações Danificadas</option>
+                    <option value="DM_Uni Habita Destruidas">Habitações Destruídas</option>
+                    <option value="DM_Uni Habita Valor">Habitações (Valor)</option>
+
+                    <option value="DM_Inst Saúde Danificadas">Instalações de Saúde Danificadas</option>
+                    <option value="DM_Inst Saúde Destruidas">Instalações de Saúde Destruídas</option>
+                    <option value="DM_Inst Saúde Valor">Saúde (Valor)</option>
+
+                    <option value="DM_Inst Ensino Danificadas">Instalações de Ensino Danificadas</option>
+                    <option value="DM_Inst Ensino Destruidas">Instalações de Ensino Destruídas</option>
+                    <option value="DM_Inst Ensino Valor">Ensino (Valor)</option>
+
+                    <option value="DM_Inst Serviços Danificadas">Serviços Danificados</option>
+                    <option value="DM_Inst Serviços Destruidas">Serviços Destruídos</option>
+                    <option value="DM_Inst Serviços Valor">Serviços (Valor)</option>
+
+                    <option value="DM_Inst Comuni Danificadas">Comunicações Danificadas</option>
+                    <option value="DM_Inst Comuni Destruidas">Comunicações Destruídas</option>
+                    <option value="DM_Inst Comuni Valor">Comunicações (Valor)</option>
+
+                    <option value="DM_Obras de Infra Danificadas">Infraestrutura Danificada</option>
+                    <option value="DM_Obras de Infra Destruidas">Infraestrutura Destruída</option>
+                    <option value="DM_Obras de Infra Valor">Infraestrutura (Valor)</option>
+                </optgroup>
+
+                <optgroup label="Prejuízo (R$)">
+                    <option value="PEPL_total_publico">Prejuízo Público Total</option>
+
+                    <option value="PEPL_Assis_méd e emergên(R$)">Assistência Médica e Emergencial</option>
+                    <option value="PEPL_Abast de água pot(R$)">Abastecimento de Água</option>
+                    <option value="PEPL_sist de esgotos sanit(R$)">Sistema de Esgoto</option>
+                    <option value="PEPL_Sis limp e rec lixo (R$)">Limpeza e Recolhimento de Lixo</option>
+                    <option value="PEPL_Sis cont pragas (R$)">Controle de Pragas</option>
+                    <option value="PEPL_distrib energia (R$)">Distribuição de Energia</option>
+                    <option value="PEPL_Telecomunicações (R$)">Telecomunicações</option>
+                    <option value="PEPL_Tran loc/reg/l_curso (R$)">Transporte</option>
+                    <option value="PEPL_Distrib combustíveis(R$)">Distribuição de Combustíveis</option>
+                    <option value="PEPL_Segurança pública (R$)">Segurança Pública</option>
+                    <option value="PEPL_Ensino (R$)">Ensino</option>
+
+                    <option value="PEPR_total_privado">Prejuízo Privado Total</option>
+
+                    <option value="PEPR_Agricultura (R$)">Agricultura</option>
+                    <option value="PEPR_Pecuária (R$)">Pecuária</option>
+                    <option value="PEPR_Indústria (R$)">Indústria</option>
+                    <option value="PEPR_Comércio (R$)">Comércio</option>
+                    <option value="PEPR_Serviços (R$)">Serviços</option>
+
+                    <option value="PE_PLePR">Prejuízo Público e Privado Total</option>
+                </optgroup>
+            </select>
+        </div>
+
+        <!-- Painel de Filtros -->
+
+        <!-- Sliders temporais -->
+        <div class="basic-box">
+            <p class="city-subtitle">Período de Incidentes</p>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.8.1/nouislider.min.js"></script>
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/15.8.1/nouislider.css">
+            <div class="slider-container">
+                <!--Anos-->
+                <p class="city-small-subtitle">Anos</p>
+                <div id="year-slider" style="height: 10px; margin: 20px 0;"></div>
+                
+                <!--Meses-->
+                <p class="city-small-subtitle">Meses</p>
+                <div id="month-slider" style="height: 10px; margin: 20px 0;"></div>
+            </div>
+        </div>
+        <div class="basic-box">
+            <!--
+            Esse botão controla se cidades que não se encaixam nos filtros
+            selecionados (possuem valor 0 com base na métrica) podem ser
+            exibidas no mapa.
+            -->
+            <button class="action-btn--nav main-icon" id="zeroCitiesBtn" title="Exibir cidades com zero incidentes">
+                <img src="images/zero_cities_icon.png" class="main-icon" alt="ZeroCities">
+            </button>
+        </div>
+    </div>
+
+    <!-- Janela do Chatbot -->
+    <div class="chat-panel">
+        <div class="chat-container minimized">
+            <div class="chat-starter">Olá, sou o Dars! Qual é a sua pergunta?</div>
+            <div class="chat-bg hidden"></div>
+            <textarea class="chat-input" id="chat-input" placeholder="Pergunte algo sobre os dados..." rows="4" cols="50"></textarea>
+        </div>
+    </div>
+
+    <!-- Painel Home -->
+    <!-- Contém funcionalidades extras -->
+    <div class="panel">
+        <div class="home-row">
+            <!--
+            Botão para exportar os dados em formato CSV
+            com base nos filtros atuais
+            -->
+            <button class="action-btn" id="exportBtn">
+                <img src="images/export_icon.png" alt="">
+                Exportar dados
+            </button>
+        </div>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Painel de Incidentes -->
+    <!--
+    Mostra todos os incidentes em uma cidade com
+    base nos filtros selecionados
+    -->
+    <div class="basic-box" id="details-box">
+        <div class="close-btn" id="incidents-close-btn">🗙</div>
+        <div class="city-title">Incidentes</div>
+        <div class="scrollable-content"></div>
+    </div>
+    
+    <!-- Topbar -->
+    <!-- Contem recursos padrão de navegação -->
+    <header class="topbar">
+        <!-- Logo e botão para abrir o painel home -->
+        <div class="logo-container">
+            <button type="button" id="openPanelBtn">
+                <img src="images/logo_temp2.png" alt="Logo" class="logo-icon">
+            </button>
+            <span class="logo-text">DashboardRS</span>
+        </div>
+        
+        <!-- Botões de navegação -->
+        <nav class="navigation">
+            
+            <button class="action-btn--nav" id="chatbotBtn" title="Conversar com o chatbot">
+                <img src="images/chatbot_icon.png" class="main-icon"  alt="Chatbot">
+            </button>
+
+            <!-- Botão para mostrar todas as bacias hidrográficas do RS -->
+            <!--
+            Estados do botão:
+            0 = Desligado;
+            1 = Exibe os polígonos das bacias;
+            2 = Exibe os polígonos e os nomes das bacias.
+            -->
+
+            <button class="action-btn--nav" id="hidroBtn" title="Exibir Bacias Hidrográficas">
+                <img src="images/hidro_icon.png" class="main-icon"  alt="Bacias">
+                <img src="images/info_extra.png" class="extra-icon hidden">
+            </button>
+
+            <!-- Botão para abrir o painel de filtros -->
+            <button class="action-btn--nav" id="filterBtn" title="Filtros">
+                <img src="images/filter_icon.png" alt="Filtros">
+            </button>
+
+            <!-- Barra de pesquisa de cidades -->
+            <div id="searchbar">
+                <input id="searchInput" type="text" placeholder="Pesquisar...">
+                <ul id="results" class="search-results"></ul>
+            </div>
+        </nav>
+    </header>
+    
+    <!-- Legenda do mapa -->
+    <!--
+    MIN = Menor valor da métrica selecionada;
+    MED = Mediana dos valores da métrica;
+    MAX = Maior valor da métrica selecionada.
+     -->
+    <div class="legend">
+        <div class="legend-item">
+            <div class="circle" id="minCircle"></div>
+            <span id="minCircleText">MÍN</span>
+        </div>
+        <div class="legend-item">
+            <div class="circle" id="medCircle"></div>
+            <span id="medCircleText">MÉD</span>
+        </div>
+        <div class="legend-item">
+            <div class="circle" id="maxCircle"></div>
+            <span id="maxCircleText">MÁX</span>
+        </div>
+    </div>
+
+    <!-- Informações de fonte e versão (localizadas no canto inferior esquerdo do mapa) -->
+    <div class="source-box">
+        <a href="https://atlasdigital.mdr.gov.br/" target="_blank">Fonte: https://atlasdigital.mdr.gov.br/</a>
+    </div>
+    <div class="version-box">
+        <span>Versão b-1.2</span>
+    </div>
+</body>
+</html>
+
+<!-- Módulos -->
+<script type="module" src="public/js/searchbar.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script> <!--Papa Parse-->
+<script src="https://unpkg.com/leaflet-omnivore/leaflet-omnivore.min.js"></script> <!--KMZ viewer-->
+<script src=" https://cdn.jsdelivr.net/npm/dompurify@3.4.6/dist/purify.min.js "></script>
+<script src="public/js/export_csv.js"></script>
+<script src="public/js/chatbot.js"></script>
+
+<!-- SCRIPT PRINCIPAL -->
+<script>
+    // Variáveis globais
+    let allCities = []; // Array com todas as cidades
+    let allCitiesSorted = []; // Array com todas as cidades selecionadas com base nos filtros
+    let allMarkers = []; // Array com todos os marcadores
+    let activeRiverLayers = {} // Dicionário para guardar todas as camadas de trechos de drenagem sendo exibidas
+    let currentField = 'danos_humanos'; // Guarda a métrica atual
+    let currentCity; // Guarda a última cidade clicada
+    let displayZeroCities = false; // Decide se cidades com valores 0 sejam exibidas no mapa
+    let indicationMarker; // Armazena o marcador de "pin" que aparece quando se clica em uma cidade
+
+    // Todas as métricas
+    const fields = [
+        "DH_MORTOS",
+        "DH_FERIDOS",
+        "DH_ENFERMOS",
+        "DH_DESABRIGADOS",
+        "DH_DESALOJADOS",
+        "DH_DESAPARECIDOS",
+        "DH_AFETADOS_SECA_ESTIAGEM",
+        "DH_total_danos_humanos_diretos",
+        "DH_OUTROS AFETADOS",
+
+        "DM_Uni Habita Danificadas",
+        "DM_Uni Habita Destruidas",
+        "DM_Uni Habita Valor",
+        "DM_Inst Saúde Danificadas",
+        "DM_Inst Saúde Destruidas",
+        "DM_Inst Saúde Valor",
+        "DM_Inst Ensino Danificadas",
+        "DM_Inst Ensino Destruidas",
+        "DM_Inst Ensino Valor",
+        "DM_Inst Serviços Danificadas",
+        "DM_Inst Serviços Destruidas",
+        "DM_Inst Serviços Valor",
+        "DM_Inst Comuni Danificadas",
+        "DM_Inst Comuni Destruidas",
+        "DM_Inst Comuni Valor",
+        "DM_Obras de Infra Danificadas",
+        "DM_Obras de Infra Destruidas",
+        "DM_Obras de Infra Valor",
+        "DM_total_danos_materiais",
+
+        "PEPL_Assis_méd e emergên(R$)",
+        "PEPL_Abast de água pot(R$)",
+        "PEPL_sist de esgotos sanit(R$)",
+        "PEPL_Sis limp e rec lixo (R$)",
+        "PEPL_Sis cont pragas (R$)",
+        "PEPL_distrib energia (R$)",
+        "PEPL_Telecomunicações (R$)",
+        "PEPL_Tran loc/reg/l_curso (R$)",
+        "PEPL_Distrib combustíveis(R$)",
+        "PEPL_Segurança pública (R$)",
+        "PEPL_Ensino (R$)",
+        "PEPL_total_publico",
+
+        "PEPR_Agricultura (R$)",
+        "PEPR_Pecuária (R$)",
+        "PEPR_Indústria (R$)",
+        "PEPR_Comércio (R$)",
+        "PEPR_Serviços (R$)",
+        "PEPR_total_privado",
+
+        "PE_PLePR",
+    ]
+
+    var hidroLayer = omnivore.kml('./data/bacias.kml'); // Camada das bacias hidrográficas
+
+    // Remove os marcadores das bacias que estão no KML
+    hidroLayer.on('ready', function () {
+        hidroLayer.eachLayer(function (layer) {
+            if (layer instanceof L.Marker) {
+                hidroLayer.removeLayer(layer);
+            }
+        });
+    });
+
+    // EVENT LISTENERS
+
+    // Abrir painel home
+    document.getElementById('openPanelBtn').addEventListener('click', () => {
+        const panel = document.querySelector('.panel');
+        const isOpen = panel.classList.toggle('open');
+        const overlay = document.getElementById("overlay");
+        overlay.classList.toggle('active');
+    });
+    
+    // Abrir painel de filtros
+    document.getElementById('filterBtn').addEventListener('click', () => {
+        const panel = document.querySelector('.filter_panel');
+        const isOpen = panel.classList.toggle('open');
+    });
+
+    // Mostrar bacias hidrográficas
+    let hidroToggle = 0;
+    const extraIcon = document.getElementById('hidroBtn').querySelector('.extra-icon');
+    // 0 = OFF
+    // 1 = ON
+    // 2 = ON + Info
+    document.getElementById('hidroBtn').addEventListener('click', function () {
+        hidroToggle++;
+        if (map.hasLayer(hidroLayer) && hidroToggle > 2) {
+            map.removeLayer(hidroLayer);
+
+            hidroLayer.eachLayer(function (layer) {
+                if (layer instanceof L.Polygon) {
+                    layer.unbindTooltip();
+                }
+            })
+
+            hidroBtn.classList.remove('active');
+            hidroBtn.classList.remove('active-extra');
+            extraIcon.classList.add('hidden');
+            hidroToggle = 0;
+
+        } else if (hidroToggle === 1) {
+            map.addLayer(hidroLayer);
+            hidroBtn.classList.add('active');
+            extraIcon.classList.add('hidden');
+            hidroLayer.bringToBack();
+
+        } else if (hidroToggle === 2) {
+            hidroBtn.classList.add('active-extra');
+            extraIcon.classList.remove('hidden');
+            hidroLayer.eachLayer(function (layer) {
+                if (layer instanceof L.Polygon) {
+
+                    var name = layer.feature?.properties?.name;
+
+                    if (name) {
+                        layer.bindTooltip(name, {
+                            permanent: true,
+                            direction: 'center',
+                            className: 'label-bacia'
+                        });
+                    }
+                }
+            });
+            hidroLayer.bringToBack();
+        }
+    });
+
+    // Atualiza o botão de trecho de drenagem para salvar o estado entre cidades
+    // (ON (azul) or OFF (cinza))
+    function updateRiverButton() {
+        const btn = document.getElementById("riverBtn");
+        if (currentCity in activeRiverLayers) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    }
+
+    document.getElementById("chatbotBtn").addEventListener('click', function (e) {
+        const panel = document.querySelector('.chat-panel');
+        const isOpen = panel.classList.toggle('open');
+    })
+
+    document.getElementById("chat-input").addEventListener('keypress', async function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            if (document.querySelector(".chat-container").classList.contains('minimized')) {
+                document.querySelector(".chat-container").classList.remove('minimized');
+                document.querySelector(".chat-bg").classList.remove('hidden');
+                document.querySelector(".chat-starter").classList.add('hidden');
+            }
+            const userInput = e.target.value;
+            console.log("User input:", userInput);
+
+            const chat = document.querySelector(".chat-bg");
+
+            const userBubble = document.createElement("div");
+            userBubble.classList.add("speech-bubble", "user");
+            userBubble.textContent = userInput;
+            chat.appendChild(userBubble);
+            e.target.value = ''; // Limpa o campo de entrada após enviar a mensagem
+
+            chat.scrollTo({
+                top: chat.scrollHeight,
+                behavior: 'smooth'
+            });
+
+            const chatbotBubble = document.createElement("div");
+            chatbotBubble.classList.add("speech-bubble", "chatbot");
+            chat.appendChild(chatbotBubble);
+
+            await sendMessage(userInput, chatbotBubble);
+
+            chat.scrollTo({
+                top: chat.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+    });
+
+    // Botões do painel de cidade
+    document.getElementById("cityPanelContent").addEventListener('click', async function (e) {
+
+        // Botão de trecho de drenagem
+        if (e.target.closest('#riverBtn')) {
+            const cityKey = currentCity.toLowerCase().replace(/\s+/g, "_");
+            const res = await fetch(`data/trecho_drenagem/geojson/${cityKey}.geojson`);
+            const geoData = await res.json();
+
+            if (currentCity in activeRiverLayers) {
+                map.removeLayer(activeRiverLayers[currentCity]);
+                delete activeRiverLayers[currentCity];
+            } else {
+                const riverLayer = L.geoJSON(geoData, {
+                    style: { color: '#0062ff', weight: 1.5 }
+                });
+                activeRiverLayers[currentCity] = riverLayer;
+                riverLayer.addTo(map);
+            }
+            updateRiverButton()
+        }
+
+        // Botão da lista de incidentes
+        if (e.target.closest('#incidentsBtn')) {
+            const detailsBox = document.getElementById('details-box');
+            const overlay = document.getElementById('overlay');
+            overlay.classList.toggle('active');
+
+            if (detailsBox.classList.contains('active')) {
+                detailsBox.classList.remove('active');
+            } else {
+                const [yValue1, yValue2] = getSliderValues('year-slider');
+                const [mValue1, mValue2] = getSliderValues('month-slider');
+                createIncidentPanel(allCities, currentCity, yValue1, yValue2, mValue1, mValue2, document.getElementById('sortFieldDisasterType').value, document.getElementById('sortFieldDamage').value);
+                detailsBox.classList.add('active');
+            }
+        }
+    });
+
+    // Botão para fechar a lista de incidentes
+    document.getElementById('incidents-close-btn').addEventListener("click", () => {
+        console.log("CLOSE");
+        const detailsBox = document.getElementById('details-box');
+        const overlay = document.getElementById('overlay');
+        overlay.classList.toggle('active');
+        detailsBox.classList.remove('active');
+    });
+
+    // "Cards" com função dropdown para a lista de incidentes
+    document.querySelectorAll('.hidden-title').forEach(title => {
+        title.addEventListener('click', () => {
+            title.classList.toggle('open');
+        });
+    });
+
+    // Botão para exportar dados em CSV
+    document.getElementById("exportBtn").addEventListener("click", () => {
+        let [bfTimestampYear, afTimestampYear] = getSliderValues('year-slider');
+        downloadCsv(
+            allCities,
+            document.getElementById('sortFieldDisasterType').value,
+            document.getElementById('sortFieldDamage').value,
+            bfTimestampYear,
+            afTimestampYear
+        );
+    });
+
+    // Botão para mostrar cidades com valores 0
+    document.getElementById("zeroCitiesBtn").addEventListener("click", () => {
+        let [yValue1, yValue2] = getSliderValues('year-slider');
+        let [mValue1, mValue2] = getSliderValues('month-slider');
+
+        if (displayZeroCities === false) {
+            displayZeroCities = true;
+            document.getElementById("zeroCitiesBtn").classList.add('active');
+        } else {
+            displayZeroCities = false;
+            document.getElementById("zeroCitiesBtn").classList.remove('active');
+        }
+        allCitiesSorted = sortCityData(allCities, yValue1, yValue2, mValue1, mValue2, document.getElementById('sortFieldDisasterType').value);
+        renderMarkers(allCitiesSorted, document.getElementById('sortFieldDamage'));
+    });
+
+    // Seletor da métrica
+    document.getElementById('sortFieldDamage').addEventListener('change', (e) => {
+        renderMarkers(allCitiesSorted, e.target);
+    });
+
+    // Seletor do tipo de desastre
+    document.getElementById('sortFieldDisasterType').addEventListener('change', (e) => {
+        let [yValue1, yValue2] = getSliderValues('year-slider');
+        let [mValue1, mValue2] = getSliderValues('month-slider');
+        allCitiesSorted = sortCityData(allCities, yValue1, yValue2, mValue1, mValue2, e.target.value);
+        renderMarkers(allCitiesSorted, document.getElementById('sortFieldDamage'));
+    });
+
+    // Função para retornar o valor dos sliders temporais
+    function getSliderValues(slider_type) {
+        // Get the slider element
+        var slider = document.getElementById(slider_type);
+
+        // Get current values (returns an array)
+        var values = slider.noUiSlider.get();
+
+        // Access individual values
+        var firstHandleValue = values[0];
+        var secondHandleValue = values[1];
+
+        return [firstHandleValue, secondHandleValue];
+    }
+
+    // Slider de ano
+    var yearSlider = document.getElementById('year-slider');
+    var startYear = 2010;
+    var endYear = 2024;
+
+    // Slider de mês
+    var monthSlider = document.getElementById('month-slider');
+    var startMonth = 1;
+    var endMonth = 12;
+
+    noUiSlider.create(yearSlider, {
+        start: [2020, 2024],
+        connect: true,
+        step: 1,
+        range: {
+            'min': startYear,
+            'max': endYear
+        },
+        format: {
+            to: function(value) {
+                return Math.round(value);
+            },
+            from: function(value) {
+                return Math.round(value);
+            }
+        },
+        pips: {
+            mode: 'steps', // Coloca um "pip" a cada passo
+            stepped: true,
+            density: 100,
+            filter: function(value) {
+                return value % 1 === 0 ? 1 : 0;
+            },
+            format: {
+                to: value => Math.round(value)
+            }
+        }
+    });
+
+    noUiSlider.create(monthSlider, {
+        start: [1, 12],
+        connect: true,
+        step: 1,
+        range: {
+            'min': startMonth,
+            'max': endMonth
+        },
+        format: {
+            to: function(value) {
+                return Math.round(value);
+            },
+            from: function(value) {
+                return Math.round(value);
+            }
+        },
+        pips: {
+            mode: 'steps',
+            stepped: true,
+            density: 100,
+            filter: function(value) {
+                return value % 1 === 0 ? 1 : 0;
+            },
+            format: {
+                to: value => Math.round(value)
+            }
+        }
+    });
+    
+    yearSlider.noUiSlider.on('change', function (values, handle) {
+        let [mValue1, mValue2] = getSliderValues('month-slider')
+
+        allCitiesSorted = sortCityData(allCities, values[0], values[1], mValue1, mValue2, document.getElementById('sortFieldDisasterType').value);
+        renderMarkers(allCitiesSorted, document.getElementById('sortFieldDamage'));
+    });
+
+    monthSlider.noUiSlider.on('change', function (values, handle) {
+        let [yValue1, yValue2] = getSliderValues('year-slider')
+
+        allCitiesSorted = sortCityData(allCities, yValue1, yValue2, values[0], values[1], document.getElementById('sortFieldDisasterType').value);
+        renderMarkers(allCitiesSorted, document.getElementById('sortFieldDamage'));
+    });
+
+    // Função auxiliar para achar os valores máximo, médio e mínimo dos filtros selecionados
+    function getFieldStats(cities, field) {
+
+        // Filtra os valores relevantes
+        let values = Object.values(cities)
+            .filter(city => city.latitude && city.longitude)
+            .map(city => city[field])
+            .filter(v => v !== null && v !== undefined && !isNaN(v) && v !== 0);
+
+        if (values.length === 0) return { min: null, max: null, median: null };
+
+        // Ordena os valores
+        const sorted = [...values].sort((a, b) => a - b);
+        
+        // Calcula a mediana
+        const med = Math.floor(sorted.length / 2);
+
+        // Trata a mediana se o número de valores é par ou ímpar
+        if (sorted.length % 2 !== 0)  {
+            median = sorted[med];
+        } else {
+            median = sorted[med - 1];
+        }
+
+        return {
+            min: Math.min(...values),
+            max: Math.max(...values),
+            med: median
+        };
+    }
+
+    // Função para criar a legenda
+    function createLegendCircle(type, cities, field) {
+        const {min, max, med} = getFieldStats(cities, field);
+
+        const min_rgb = getColorLogarithm(cities, min, field);
+        const med_rgb = getColorLogarithm(cities, med, field);
+        const max_rgb = getColorLogarithm(cities, max, field);
+
+        if (type == 0) { // Mínimo
+            return min_rgb;
+        } else if (type == 1) { // Mediana
+            return med_rgb;
+        } else if (type == 2) { // Máximo
+            return max_rgb;
+        }
+    }
+
+    // Função para escolher uma cor seguindo uma escala logaritmica
+    function getColorLogarithm(data, value, field) {
+        const stats = getFieldStats(data, field);
+        const { min, max } = stats;
+        const range = max - min || 1;
+
+        // Se todos o valores são o mesmo, use apenas verde
+        if (min === max) {
+            return `rgb(0, 255, 0)`;
+        }
+
+        // Normaliza os valores
+        const logMin = Math.log(min + 1);
+        const logMax = Math.log(max + 1);
+        const logValue = Math.log(value + 1);
+        const normalized = (logValue - logMin) / (logMax - logMin);
+
+        let r, g; // red, green
+
+        // Divide o gradiente em duas partes:
+        if (normalized < 0.5) {
+            // Verde -> Amarelo
+            const t = normalized / 0.5;
+            r = Math.round(255 * t);
+            g = 255;
+        } else {
+            // Amarelo -> Verde
+            const t = (normalized - 0.5) / 0.5;
+            r = 255;
+            g = Math.round(255 * (1 - t));
+        }
+
+        return `rgb(${r}, ${g}, 0)`;
+    }
+
+    // Função para limpar todos os marcadores de cidades
+    function clearMarkers() {
+        allMarkers.forEach(marker => map.removeLayer(marker));
+        allMarkers = [];
+    }
+
+    // Para colocar o marcador "pin" na cidade
+    const panel = document.querySelector('.city_panel');
+    const panelContent = document.getElementById('cityPanelContent');
+    const openBtn = document.getElementById('openPanelBtn');
+
+    document.addEventListener('click', (e) => {
+        // Don't close panel if clicked on map markers or inside the map
+        if (e.target.closest('.leaflet-marker-icon') || e.target.closest('.leaflet-pane')) {
+            return;
+        }
+        
+        if (!panel.contains(e.target) && !openBtn.contains(e.target)) {
+            panel.classList.remove('open');
+            if (indicationMarker) {
+                indicationMarker.remove();
+            }
+            
+            e.stopPropagation();
+        }
+    });
+
+    // Funcão para colocar os marcadores de cidade
+    function renderMarkers(data, sortField) {
+
+        clearMarkers();
+        currentField = sortField.value;
+
+        document.getElementById("minCircle").style.backgroundColor = createLegendCircle(0, data, currentField);
+        document.getElementById("medCircle").style.backgroundColor = createLegendCircle(1, data, currentField);
+        document.getElementById("maxCircle").style.backgroundColor = createLegendCircle(2, data, currentField);
+
+        Object.values(data).forEach(city => {
+            const value = city[currentField];
+            
+            if (!city.latitude || !city.longitude) {
+                return;
+            }
+
+            if (value === 0 && displayZeroCities === false) return;
+            
+            const marker = L.circleMarker([city.latitude, city.longitude], {
+                radius: 10,
+                fillColor: getColorLogarithm(data, value, currentField),
+                color: '#fff',
+                weight: 1,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map)
+
+            // Open Side Panel
+            
+            .on('click', (e) => {
+                currentCity = city.nome;
+                let [yBefore, yAfter] = getSliderValues('year-slider');
+                L.DomEvent.stopPropagation(e); // Previne que o painel de fechar quando clica no marcador
+                if (indicationMarker !== undefined) {
+                    indicationMarker.remove();
+                }
+                indicationMarker = L.marker([city.latitude, city.longitude]).addTo(map);
+                map.setView([city.latitude, city.longitude]);
+                let num_des; // Número de desastres
+                if (currentField === "total_desastres") {
+                    num_des = city["total_desastres"];
+                } else {
+                    num_des = city[`num_des_${sortField.options[sortField.selectedIndex].value}`]
+                }
+                panelContent.innerHTML = `
+                        <h1 class="city-title">${city.nome}</h1>
+
+                        <img class="city-image" src="./images/no_image.png" alt="No image found">
+
+                        <button class="action-btn--nav" class="main-icon" id="riverBtn" title="Exibir trecho de drenagem">
+                            <img src="images/river_icon.png" class="main-icon" alt="River">
+                        </button>
+                        <button class="action-btn--nav" class="main-icon" id="incidentsBtn" title="Mostrar todos os incidentes envolvendo a métrica">
+                            <img src="images/incidents_icon.png" class="main-icon" alt="Incidents">
+                        </button>
+
+                        <section>
+                        <div class="info-row">
+                            <img src="./images/population_icon.png" alt="">
+                            <span>População: <b>${city.populacao}</b></span>
+                        </div>
+
+                        <div class="info-row">
+                            <img src="./images/location_map_icon.png" alt="">
+                            <span>Lat: <b>${city.latitude}</b>, Lon: <b>${city.longitude}</b></span>
+                        </div>
+                        </section>
+
+                        <section>
+                        <h2 class="city-subtitle">Incidentes (${yBefore} ~ ${yAfter})</h2>
+
+                        <div class="info-row">
+                            <img src="./images/disaster_icon.png" alt="">
+                            <span>${sortField.options[sortField.selectedIndex].text}: <b>${city[currentField]}</b></span>
+                        </div>
+
+                        <div class="info-row">
+                            <img src="./images/disaster_alt_icon.png" alt="">
+                            <span>Total de Incidentes: <b>${num_des}</b></span>
+                        </div>
+                        </section>
+                    </div>
+
+                `;
+                panel.classList.add('open');
+                updateRiverButton()
+            });
+            
+            allMarkers.push(marker);
+        });
+    }
+
+    // Função para filtrar e fazer a soma dos valores do Atlas
+    function sortCityData(result, bfTimestampYear=2020, afTimestampYear=2024, bfTimestampMonth=1, afTimestampMonth=12, disasterType) {
+        let cityData = {};
+
+        for (const row of result) {
+            let thisCity;
+            let disasterCount;
+            let invalid = false;
+
+            if (!row["Data_Evento"]) continue;
+
+            const year = Number(row["Data_Evento"].split("/")[2])
+            const month = Number(row["Data_Evento"].split("/")[1])
+
+            if (displayZeroCities == false) {
+                if (year > afTimestampYear || year < bfTimestampYear) continue;
+                if (month > afTimestampMonth || month < bfTimestampMonth) continue;
+            } else {
+                if (year > afTimestampYear || year < bfTimestampYear) invalid = true;
+                if (month > afTimestampMonth || month < bfTimestampMonth) invalid = true;
+            }
+            
+            if (displayZeroCities == false) {
+                if (Number(disasterType) !== 0) {
+                    if (parseInt(row["tipologia"], 10) !== Number(disasterType)) continue;
+                }
+            } else {
+                if (Number(disasterType) !== 0) {
+                    if (parseInt(row["tipologia"], 10) !== Number(disasterType)) invalid = true;
+                }
+            }
+
+            if (!(row["Nome_Municipio"] in cityData)) {
+                cityData[row["Nome_Municipio"]] = {
+                    nome: row["Nome_Municipio"],
+                    latitude: row["latitude"],
+                    longitude: row["longitude"],
+                    populacao: row["populacao"],
+                    total_desastres: 0,
+                };
+                for (const field of fields) {
+                    cityData[row["Nome_Municipio"]][field] = 0;
+                    cityData[row["Nome_Municipio"]][`num_des_${field}`] = 0;
+                }
+            }
+            
+            if (invalid) continue;
+
+            thisCity = cityData[row["Nome_Municipio"]];
+            thisCity["total_desastres"] += 1;
+
+            for (const field of fields) {
+                thisCity[field] += parseFloat(row[field]) || 0;
+                if (thisCity[field] > 0) {
+                    thisCity[`num_des_${field}`] += 1
+                }
+            }
+        }
+
+        return cityData;
+    }
+
+    // Função para criar a lista de incidentes
+    function createIncidentPanel(result, cityName, bfTimestampYear=2020, afTimestampYear=2024, bfTimestampMonth=1, afTimestampMonth=12, disasterType, metricType) {
+        const scrollable = document.querySelector("#details-box .scrollable-content"); // Onde são colocados os incidentes
+        scrollable.innerHTML = ""; // Dá um purge para remover tudo que já estava lá
+
+        for (const row of result) {
+
+            if (!row["Data_Evento"]) continue;
+
+            const year = Number(row["Data_Evento"].split("/")[2])
+            const month = Number(row["Data_Evento"].split("/")[1])
+
+            if (year > afTimestampYear || year < bfTimestampYear) continue;
+            if (month > afTimestampMonth || month < bfTimestampMonth) continue;
+            
+            if (Number(disasterType) !== 0) {
+                if (parseInt(row["tipologia"], 10) !== Number(disasterType)) continue;
+            }
+
+            if (row[metricType] == 0) continue;
+
+            if (row["Nome_Municipio"] !== cityName) continue;
+
+            let incidentValues = {}; // Guarda os valores dos incidentes
+
+            for (const field of fields) { // Itera sobre cada campo e guarda o valor no dict
+                const value  = parseFloat(row[field]) || 0;
+
+                incidentValues[field] = {
+                    raw: value,
+                    display: value > 0 ? `<strong>${value}</strong>` : `${value}` // Se o valor é maior que zero, no display, coloca ele em negrito
+                };
+            }
+
+            // Todos os tipos de tipologia
+            const tipologyTypes = {
+                1: "Alagamentos",
+                2: "Enxurradas",
+                3: "Erosão",
+                4: "Estiagem e seca",
+                5: "Granizo",
+                6: "Incêndio Florestal",
+                7: "Inundações",
+                8: "Movimentos de Massa",
+                9: "Chuvas Intensas",
+                10: "Ondas de Frio",
+                11: "Tornado",
+                12: "Vendavais e Ciclones",
+                13: "Chuvas Intensas",
+                14: "Outros",
+                15: "Rompimento ou Colapsos de Barragens"
+            };
+
+
+            const box = document.createElement("div");
+            box.className = "basic-box";
+            box.innerHTML = `
+                <details>
+                    <summary class="hidden-title">${row["Data_Evento"]} - ${tipologyTypes[parseInt(row["tipologia"], 10)]}</summary>
+
+                    <div class="city-small-subtitle">
+                        <img src="images/dh_icon.png" class="basic-icon" alt="pe">
+                        <span>Danos Humanos</span>
+                    </div>
+                    <ul class="data-list">
+                        <li>Danos Humanos (Total): ${incidentValues["DH_total_danos_humanos_diretos"].display ?? 0}</li>
+                        <li>Mortos: ${incidentValues["DH_MORTOS"].display ?? 0}</li>
+                        <li>Feridos: ${incidentValues["DH_FERIDOS"].display ?? 0}</li>
+                        <li>Enfermos: ${incidentValues["DH_ENFERMOS"].display ?? 0}</li>
+                        <li>Desabrigados: ${incidentValues["DH_DESABRIGADOS"].display ?? 0}</li>
+                        <li>Desalojados: ${incidentValues["DH_DESALOJADOS"].display ?? 0}</li>
+                        <li>Desaparecidos: ${incidentValues["DH_DESAPARECIDOS"].display ?? 0}</li>
+                        <li>Afetados por Seca/Estiagem: ${incidentValues["DH_AFETADOS_SECA_ESTIAGEM"].display ?? 0}</li>
+                        <li>Outros Afetados: ${incidentValues["DH_OUTROS AFETADOS"].display ?? 0}</li>
+                    </ul>
+
+                    <div class="city-small-subtitle">
+                        <img src="images/dm_icon.png" class="basic-icon" alt="dm">
+                        <span>Danos Materiais</span>
+                    </div>
+                    <ul class="data-list">
+                        <li>Danos Materiais (Total): ${incidentValues["DM_total_danos_materiais"].display ?? 0}</li>
+
+                        <li>Habitações Danificadas: ${incidentValues["DM_Uni Habita Danificadas"].display ?? 0}</li>
+                        <li>Habitações Destruídas: ${incidentValues["DM_Uni Habita Destruidas"].display ?? 0}</li>
+                        <li>Habitações (Valor): ${incidentValues["DM_Uni Habita Valor"].display ?? 0}</li>
+
+                        <li>Instalações de Saúde Danificadas: ${incidentValues["DM_Inst Saúde Danificadas"].display ?? 0}</li>
+                        <li>Instalações de Saúde Destruídas: ${incidentValues["DM_Inst Saúde Destruidas"].display ?? 0}</li>
+                        <li>Saúde (Valor): ${incidentValues["DM_Inst Saúde Valor"].display ?? 0}</li>
+
+                        <li>Instalações de Ensino Danificadas: ${incidentValues["DM_Inst Ensino Danificadas"].display ?? 0}</li>
+                        <li>Instalações de Ensino Destruídas: ${incidentValues["DM_Inst Ensino Destruidas"].display ?? 0}</li>
+                        <li>Ensino (Valor): ${incidentValues["DM_Inst Ensino Valor"].display ?? 0}</li>
+
+                        <li>Serviços Danificados: ${incidentValues["DM_Inst Serviços Danificadas"].display ?? 0}</li>
+                        <li>Serviços Destruídos: ${incidentValues["DM_Inst Serviços Destruidas"].display ?? 0}</li>
+                        <li>Serviços (Valor): ${incidentValues["DM_Inst Serviços Valor"].display ?? 0}</li>
+
+                        <li>Comunicações Danificadas: ${incidentValues["DM_Inst Comuni Danificadas"].display ?? 0}</li>
+                        <li>Comunicações Destruídas: ${incidentValues["DM_Inst Comuni Destruidas"].display ?? 0}</li>
+                        <li>Comunicações (Valor): ${incidentValues["DM_Inst Comuni Valor"].display ?? 0}</li>
+
+                        <li>Infraestrutura Danificada: ${incidentValues["DM_Obras de Infra Danificadas"].display ?? 0}</li>
+                        <li>Infraestrutura Destruída: ${incidentValues["DM_Obras de Infra Destruidas"].display ?? 0}</li>
+                        <li>Infraestrutura (Valor): ${incidentValues["DM_Obras de Infra Valor"].display ?? 0}</li>
+                    </ul>
+
+                    <div class="city-small-subtitle">
+                        <img src="images/pe_icon.png" class="basic-icon" alt="pe">
+                        <span>Prejuízo (R$)</span>
+                    </div>
+                    <ul class="data-list">
+                        <li>Prejuízo Público Total: ${incidentValues["PEPL_total_publico"].display ?? 0}</li>
+
+                        <li>Assistência Médica e Emergencial: ${incidentValues["PEPL_Assis_méd e emergên(R$)"].display ?? 0}</li>
+                        <li>Abastecimento de Água: ${incidentValues["PEPL_Abast de água pot(R$)"].display ?? 0}</li>
+                        <li>Sistema de Esgoto: ${incidentValues["PEPL_sist de esgotos sanit(R$)"].display ?? 0}</li>
+                        <li>Limpeza e Recolhimento de Lixo: ${incidentValues["PEPL_Sis limp e rec lixo (R$)"].display ?? 0}</li>
+                        <li>Controle de Pragas: ${incidentValues["PEPL_Sis cont pragas (R$)"].display ?? 0}</li>
+                        <li>Distribuição de Energia: ${incidentValues["PEPL_distrib energia (R$)"].display ?? 0}</li>
+                        <li>Telecomunicações: ${incidentValues["PEPL_Telecomunicações (R$)"].display ?? 0}</li>
+                        <li>Transporte: ${incidentValues["PEPL_Tran loc/reg/l_curso (R$)"].display ?? 0}</li>
+                        <li>Distribuição de Combustíveis: ${incidentValues["PEPL_Distrib combustíveis(R$)"].display ?? 0}</li>
+                        <li>Segurança Pública: ${incidentValues["PEPL_Segurança pública (R$)"].display ?? 0}</li>
+                        <li>Ensino: ${incidentValues["PEPL_Ensino (R$)"].display ?? 0}</li>
+
+                        <li>Prejuízo Privado Total: ${incidentValues["PEPR_total_privado"].display ?? 0}</li>
+
+                        <li>Agricultura: ${incidentValues["PEPR_Agricultura (R$)"].display ?? 0}</li>
+                        <li>Pecuária: ${incidentValues["PEPR_Pecuária (R$)"].display ?? 0}</li>
+                        <li>Indústria: ${incidentValues["PEPR_Indústria (R$)"].display ?? 0}</li>
+                        <li>Comércio: ${incidentValues["PEPR_Comércio (R$)"].display ?? 0}</li>
+                        <li>Serviços: ${incidentValues["PEPR_Serviços (R$)"].display ?? 0}</li>
+
+                        <li>Prejuízo Público e Privado Total: ${incidentValues["PE_PLePR"].display ?? 0}</li>
+                    </ul>
+
+                </details>
+                `;
+            scrollable.insertBefore(box, scrollable.lastElementChild); // Dá um append na lista
+        }
+    }
+
+    // INICIALIZAÇÃO
+
+    // Carrega as cidades com base no Atlas e coloca os marcadores
+    fetch('data/Atlas_CSV.csv')
+    .then(res => res.arrayBuffer())
+    .then(buffer => {
+        const text = new TextDecoder('iso-8859-1').decode(buffer);
+        const result = Papa.parse(text, {
+            header: true,
+            dynamicTyping: true
+        });
+        allCities = result.data;
+
+        // Send cities data to backend
+        fetch("http://localhost:8000/init-cities", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ cities: allCities })
+        });
+
+
+        let [yValue1, yValue2] = getSliderValues('year-slider');
+        let [mValue1, mValue2] = getSliderValues('month-slider');
+        allCitiesSorted = sortCityData(allCities, yValue1, yValue2, mValue1, mValue2, document.getElementById('sortFieldDisasterType').value);
+        renderMarkers(allCitiesSorted, document.getElementById('sortFieldDamage'));
+    });
+
+</script>
